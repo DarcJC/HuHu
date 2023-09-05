@@ -20,6 +20,7 @@ namespace rendering {
     using String = std::wstring;
 
     template<class T> using TSharedPtr = std::shared_ptr<T>;
+    template<class T> using TUniquePtr = std::unique_ptr<T>;
 
 }// namespace rendering
 

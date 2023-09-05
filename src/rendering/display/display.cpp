@@ -21,6 +21,10 @@ TSharedPtr<GLFWInitHelper> rendering::GLFWInitHelper::get_or_create() {
 }
 
 GLFWInitHelper::GLFWInitHelper() {
+    glfwSetErrorCallback(on_glfw_error);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // don't initialize glfw with OpenGL context.
+    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE); // MacOS: disable battery save
+
     if (!glfwInit()) {
         throw std::runtime_error("[Display] Failed to initialize GLFW!");
     }
@@ -30,9 +34,15 @@ GLFWInitHelper::~GLFWInitHelper() {
     glfwTerminate();
 }
 
+void GLFWInitHelper::on_glfw_error(int code, const char *message) {
+    // TODO [darc] log error
+    printf("[error] GLFW: %d - %s\n", code, message);
+}
+
 Window::Window(String in_title, size_t width, size_t height) : m_window_title(std::move(in_title)), m_glfw_init_helper(GLFWInitHelper::get_or_create()) {
     CharString new_string = tools::CStringHelper::unicode_to_utf8(m_window_title);
 
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // don't initialize glfw with OpenGL context.
     if (m_internal_window = glfwCreateWindow(int(width), int(height), new_string.c_str(), nullptr, nullptr); !m_internal_window) {
         throw std::runtime_error("[Display] Failed to create window.");
     }
@@ -52,8 +62,6 @@ bool Window::is_valid() const {
 
 void Window::poll() {
     if (is_valid()) LIKELY_BRANCH {
-        glfwMakeContextCurrent(m_internal_window);
-
         glfwPollEvents();
     }
 }
@@ -65,4 +73,8 @@ Window::~Window() {
 
 bool Window::is_closed() const {
     return glfwWindowShouldClose(m_internal_window);
+}
+
+GLFWwindow *Window::raw_ptr() const {
+    return m_internal_window;
 }

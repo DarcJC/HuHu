@@ -1,4 +1,5 @@
-file(GLOB_RECURSE CoreFileList *.cpp)
+file(GLOB_RECURSE CoreFileList core/*.cpp)
+file(GLOB_RECURSE DisplayFileList display/*.cpp)
 
 add_library(Rendering STATIC ${CoreFileList} ${DisplayFileList})
 target_include_directories(Rendering PUBLIC include/)

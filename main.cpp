@@ -3,9 +3,11 @@
 #include "GLFW/glfw3.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
 
     rendering::Window new_window;
+
+    rendering::wgpu::init_cpp_dawn_device(new_window.raw_ptr());
+
     while (!new_window.is_closed()) {
         new_window.poll();
     }

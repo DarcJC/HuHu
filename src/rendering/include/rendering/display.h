@@ -1,6 +1,6 @@
 #pragma once
 
-#include "type_traits.h"
+#include "core/type_traits.h"
 
 struct GLFWwindow;
 
@@ -8,6 +8,8 @@ namespace rendering {
     struct GLFWInitHelper final {
         GLFWInitHelper();
         ~GLFWInitHelper();
+
+        static void on_glfw_error(int code, const char* message);
 
         static TSharedPtr<GLFWInitHelper> get_or_create();
     };
@@ -22,6 +24,8 @@ namespace rendering {
         void poll();
 
         NODISCARD bool is_closed() const;
+
+        NODISCARD GLFWwindow* raw_ptr() const;
 
     private:
         NODISCARD bool is_valid() const;
