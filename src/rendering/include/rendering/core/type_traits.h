@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include "Eigen/Dense"
 
 #define FORCEINLINE inline
 #define NODISCARD [[nodiscard]]
@@ -21,6 +22,14 @@ namespace rendering {
 
     template<class T> using TSharedPtr = std::shared_ptr<T>;
     template<class T> using TUniquePtr = std::unique_ptr<T>;
+
+    using Vector = Eigen::Vector3d;
+    using Vector4d = Eigen::Vector4d;
+    using Vector4f = Eigen::Vector4f;
+    using Vector3d = Eigen::Vector3d;
+    using Vector3f = Eigen::Vector3f;
+    using Vector2f = Eigen::Vector2f;
+    using Vector2d = Eigen::Vector2f;
 
 }// namespace rendering
 
