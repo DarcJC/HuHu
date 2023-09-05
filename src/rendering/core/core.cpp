@@ -57,6 +57,10 @@ void print_device_lost(WGPUDeviceLostReason reason, const char *message, void *)
     dawn::ErrorLog() << "Device lost: " << message;
 }
 
+void on_window_resize(GLFWwindow* window, int width, int height) {
+    rendering::wgpu::get_swapchain(window, true);
+}
+
 dawn::native::Instance *rendering::wgpu::get_instance() {
     static TUniquePtr<dawn::native::Instance> GInstance = std::make_unique<dawn::native::Instance>();
 
@@ -89,6 +93,8 @@ void rendering::wgpu::init_cpp_dawn_device(GLFWwindow *glfw_window) {
     proc_table.deviceSetUncapturedErrorCallback(backend_device->Get(), print_uncaptured_error, nullptr);
     proc_table.deviceSetLoggingCallback(backend_device->Get(), print_device_log, nullptr);
     proc_table.deviceSetDeviceLostCallback(backend_device->Get(), print_device_lost, nullptr);
+
+    glfwSetFramebufferSizeCallback(glfw_window, on_window_resize);
 }
 
 ::wgpu::BackendType rendering::wgpu::get_backend_type() {
@@ -114,7 +120,7 @@ void rendering::wgpu::init_cpp_dawn_device(GLFWwindow *glfw_window) {
 }
 
 ::wgpu::TextureFormat rendering::wgpu::get_preferred_swapchain_texture_format() {
-    return ::wgpu::TextureFormat::RG32Float;
+    return ::wgpu::TextureFormat::BGRA8Unorm;
 }
 
 dawn::native::Adapter rendering::wgpu::get_adapter() {
@@ -160,16 +166,18 @@ DawnProcTable &rendering::wgpu::get_proc_table() {
     return GWindow2SurfaceMap[glfw_window].get();
 }
 
-::wgpu::SwapChain *rendering::wgpu::get_swapchain(GLFWwindow *glfw_window) {
+::wgpu::SwapChain *rendering::wgpu::get_swapchain(GLFWwindow *glfw_window, bool force_update) {
     if (nullptr == glfw_window) {
         throw std::invalid_argument("[wgpu] get_swapchain received a nullptr.");
     }
 
     static std::unordered_map<GLFWwindow *, std::unique_ptr<::wgpu::SwapChain>> GWindow2SwapchainMap;
 
-    if (!GWindow2SwapchainMap.count(glfw_window)) {
+    if (!GWindow2SwapchainMap.count(glfw_window) || force_update) {
         int window_height = 0, window_width = 0;
         glfwGetWindowSize(glfw_window, &window_width, &window_height);
+        window_height = std::max(window_height, 1);
+        window_height = std::max(window_width, 1);
 
         WGPUSwapChainDescriptor swapchain_descriptor{};
         swapchain_descriptor.usage = WGPUTextureUsage_RenderAttachment;
@@ -177,9 +185,10 @@ DawnProcTable &rendering::wgpu::get_proc_table() {
         swapchain_descriptor.width = window_width;
         swapchain_descriptor.height = window_height;
         swapchain_descriptor.presentMode = WGPUPresentMode_Fifo;
-        WGPUSwapChain backend_swapchain = get_proc_table().deviceCreateSwapChain(get_device()->Get(),
-                                                                                 get_surface(glfw_window)->Get(),
-                                                                                 &swapchain_descriptor);
+        WGPUSwapChain backend_swapchain = get_proc_table().deviceCreateSwapChain(
+                get_device()->Get(),
+                get_surface(glfw_window)->Get(),
+                &swapchain_descriptor);
         GWindow2SwapchainMap[glfw_window] = std::make_unique<::wgpu::SwapChain>(
                 ::wgpu::SwapChain::Acquire(backend_swapchain));
     }

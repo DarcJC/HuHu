@@ -28,7 +28,7 @@ namespace rendering::wgpu {
 
     ::wgpu::Surface* get_surface(GLFWwindow* glfw_window);
 
-    ::wgpu::SwapChain* get_swapchain(GLFWwindow* glfw_window);
+    ::wgpu::SwapChain* get_swapchain(GLFWwindow* glfw_window, bool force_update = false);
 
     void init_cpp_dawn_device(GLFWwindow* glfw_window);
 
