@@ -9,50 +9,72 @@ ResourceInitializationError::ResourceInitializationError(const rendering::CharSt
 
 ResourceInitializationError::ResourceInitializationError(const char *_Message) : _MyBase(_Message) {}
 
-void GPUResource::init() {
+void GPUResource::init_render_thread() {
     if (has_initialized) {
         throw ResourceInitializationError("Resource has been initialized!");
     }
     has_initialized = true;
 }
 
-void GPUResource::release() noexcept {}
+void GPUResource::release_render_thread() noexcept {}
 
-void BasicVertexBuffer::init() {
-    Super::init();
+void GPUResource::init() {}
+
+void GPUResource::release() {}
+
+BasicVertexBuffer::BasicVertexBuffer(const std::vector<DataType> &data, bool cpu_access, const char *debug_name) : TBufferResource<Vector>(data, cpu_access, debug_name) {}
+
+void BasicVertexBuffer::init_render_thread() {
+    Super::init_render_thread();
 
     m_descriptor.usage = ::wgpu::BufferUsage::MapWrite | ::wgpu::BufferUsage::Vertex;
+    m_descriptor.size = m_data.size() * sizeof(DataType);
+    m_descriptor.label = m_debug_name.c_str();
+    m_descriptor.mappedAtCreation = true;
     if (m_cpu_access) {
         m_descriptor.usage |= ::wgpu::BufferUsage::MapRead;
     }
-    m_descriptor.size = m_data.size();
 
     m_buffer = wgpu::get_device()->CreateBuffer(&m_descriptor);
 
     size_t mapped_size = m_buffer.GetSize();
     DataType * mapped_memory = static_cast<DataType*>(m_buffer.GetMappedRange());
 
-    std::memcpy(mapped_memory, m_data.data(), std::clamp<size_t>(m_data.size(), 0, mapped_size));
+    std::memcpy(mapped_memory, m_data.data(), std::clamp<size_t>(m_data.size() * sizeof(DataType), 0, mapped_size));
 
-    if (!m_cpu_access) {
-        m_data.resize(0);
-    }
+    m_buffer.Unmap();
 }
 
-void BasicVertexBuffer::release() noexcept {
-    m_data.clear();
+void BasicVertexBuffer::release_render_thread() noexcept {
+    m_data.resize(0);
     m_buffer.Destroy();
 }
 
-BasicVertexBuffer::BasicVertexBuffer(const std::vector<DataType> &data, bool cpu_access, const char *debug_name)
-    : m_data(data)
-    , m_cpu_access(cpu_access)
-{
-    m_descriptor.label = debug_name;
-    m_descriptor.mappedAtCreation = true;
+BasicIndexBuffer::BasicIndexBuffer(const std::vector<DataType> &data, bool cpu_access, const char *debug_name) : TBufferResource<Vector>(data, cpu_access, debug_name) {}
 
-    if (m_data.size() == 0) {
-        throw ResourceInitializationError("Vertex buffer size could not be zero.");
+void BasicIndexBuffer::init_render_thread() {
+    Super::init_render_thread();
+
+    m_descriptor.usage = ::wgpu::BufferUsage::MapWrite | ::wgpu::BufferUsage::Index;
+    m_descriptor.size = m_data.size() * sizeof(DataType);
+    m_descriptor.label = m_debug_name.c_str();
+    m_descriptor.mappedAtCreation = true;
+    if (m_cpu_access) {
+        m_descriptor.usage |= ::wgpu::BufferUsage::MapRead;
     }
+
+    m_buffer = wgpu::get_device()->CreateBuffer(&m_descriptor);
+
+    size_t mapped_size = m_buffer.GetSize();
+    DataType * mapped_memory = static_cast<DataType*>(m_buffer.GetMappedRange());
+
+    std::memcpy(mapped_memory, m_data.data(), std::clamp<size_t>(m_data.size() * sizeof(DataType), 0, mapped_size));
+
+    m_buffer.Unmap();
+}
+
+void BasicIndexBuffer::release_render_thread() noexcept {
+    m_data.resize(0);
+    m_buffer.Destroy();
 }
 
