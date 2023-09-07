@@ -69,6 +69,11 @@ int main(int argc, const char* argv[]) {
         context.add_include_path(path.c_str());
     }
 
+    for (const auto& definition : arg_definitions) {
+        if (definition.empty()) continue;
+        context.add_macro_definition(definition);
+    }
+
     ContextType::iterator_type first = std::begin(context);
     ContextType::iterator_type last = std::end(context);
     while (last != first) {
