@@ -65,6 +65,10 @@ int main(int argc, const char* argv[]) {
 
     ContextType context(std::begin(input_code), std::end(input_code), input_file_path.c_str());
 
+    for (const auto& path : arg_find_paths) {
+        context.add_include_path(path.c_str());
+    }
+
     ContextType::iterator_type first = std::begin(context);
     ContextType::iterator_type last = std::end(context);
     while (last != first) {
