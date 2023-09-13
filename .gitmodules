@@ -1,3 +1,6 @@
 [submodule "thirdparty/dawn"]
 	path = thirdparty/dawn
 	url = https://dawn.googlesource.com/dawn
+[submodule "thirdparty/reflection"]
+	path = thirdparty/reflection
+	url = https://github.com/DarcJC/CPP-Reflection.git
